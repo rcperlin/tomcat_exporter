@@ -20,11 +20,11 @@ import java.util.*;
  * </pre>
  * Example metrics being exported:
  * <pre>
- *    tomcat_jdbc_connections_max{pool="jdbc/mypool"} 20.0
- *    tomcat_jdbc_connections_active_total{pool="jdbc/mypool"} 2.0
- *    tomcat_jdbc_connections_idle_total{pool="jdbc/mypool"} 6.0
- *    tomcat_jdbc_connections_total{pool="jdbc/mypool"} 8.0
- *    tomcat_jdbc_connections_threadswaiting_total{pool="jdbc/mypool"} 0.0
+ *    tomcat_jdbc_connections_max{context="/foo",pool="jdbc/mypool"} 20.0
+ *    tomcat_jdbc_connections_active_total{context="/foo",pool="jdbc/mypool"} 2.0
+ *    tomcat_jdbc_connections_idle_total{context="/foo",pool="jdbc/mypool"} 6.0
+ *    tomcat_jdbc_connections_total{context="/foo",pool="jdbc/mypool"} 8.0
+ *    tomcat_jdbc_connections_threadswaiting_total{context="/foo",pool="jdbc/mypool"} 0.0
  * </pre>
  */
 
@@ -38,7 +38,7 @@ public class TomcatJdbcPoolExports extends Collector {
             Set<ObjectInstance> mBeans = server.queryMBeans(filterName, null);
 
             if (mBeans.size() > 0) {
-                List<String> labelList = Collections.singletonList("pool");
+                List<String> labelList = Arrays.asList("pool", "context");
 
                 GaugeMetricFamily maxActiveConnectionsGauge = new GaugeMetricFamily(
                         "tomcat_jdbc_connections_max",
@@ -101,7 +101,7 @@ public class TomcatJdbcPoolExports extends Collector {
                         labelList);
 
                 for (final ObjectInstance mBean : mBeans) {
-                    List<String> labelValueList = Collections.singletonList(mBean.getObjectName().getKeyProperty("name").replaceAll("[\"\\\\]", ""));
+                    List<String> labelValueList = Arrays.asList(mBean.getObjectName().getKeyProperty("name").replaceAll("[\"\\\\]", ""), mBean.getObjectName().getKeyProperty("context"));
                     if (mBean.getObjectName().getKeyProperty("connections") == null) {  // Tomcat 8.5.33 ignore PooledConnections
 
                         maxActiveConnectionsGauge.addMetric(
